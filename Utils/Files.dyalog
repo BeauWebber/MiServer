@@ -363,16 +363,21 @@
       :EndSelect
     ∇
 
-    ∇ r←SplitFilename filename;filesep;mask;path;file;ext
+    ∇ r←{noext}SplitFilename filename;filesep;mask;path;file;ext
     ⍝ splits a filename into: path name ext
+      noext←{6::0 ⋄ noext}''
       filesep←(~IsWin)↓'\/'
       mask←⌽∨\⌽filename∊filesep
       path←mask/filename
       file←(~mask)/filename
-      mask←∨\⌽<\⌽'.'=file
-      ext←mask/file
-      file←(~mask)/file
-      r←path file ext
+      :If noext
+          r←path file
+      :Else
+          mask←∨\⌽<\⌽'.'=file
+          ext←mask/file
+          file←(~mask)/file
+          r←path file ext
+      :EndIf
     ∇
 
 

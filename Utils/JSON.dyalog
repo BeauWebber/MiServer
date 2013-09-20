@@ -228,7 +228,7 @@
           r←⍕a
       :Else
           r←''
-          :For n :In a.⎕NL-2
+          :For n :In a.⎕NL-2 9
               r,←'"',n,'":',(NSval a.⍎n),','
           :EndFor
           r←'{',(¯1↓r),'}'

@@ -77,7 +77,7 @@
       :For at :In attr
           name id type what←4↑at,(⍴at)↓4⍴⊂''
           :Select id
-          :CaseList 'attr' 'css' 'html' 'is' 'serialize' ⍝ no selector specified, use evt.target
+          :CaseList 'val' 'attr' 'css' 'html' 'is' 'serialize' ⍝ no selector specified, use evt.target
               type what←id type
               id←'evt.target'
           :Case 'eval'

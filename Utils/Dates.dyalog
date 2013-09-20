@@ -33,18 +33,21 @@
       :EndIf
     ∇
 
-    ∇ SM←DateToIDN TS;⎕ML                  ⍝ Convert date format
-      ⎕ML←0                                ⍝ Native Dyalog.
+    ∇ SM←DateToIDN TS                  ⍝ Convert date format
       SM←2 ⎕NQ'.' 'DateToIDN'(3↑TS)
       :If 3<⍴TS
-          SM+←24 60 60 1000{(⍺⊥4↑3↓⍵)÷×/⍺}TS
+          SM+←(24 60 60 1000⊥4↑3↓TS)÷86400000
       :EndIf
     ∇
 
-    ∇ TS←IDNToDate SM;⎕ML;T                ⍝ Convert IDN to date format : 3↑⎕TS ← IDN (akd TS_SM)
-      ⎕ML←0                                ⍝ Native Dyalog.
-      TS←3↑2 ⎕NQ'.' 'IDNToDate'(T←⌊SM)
-      TS,←⌊0.5+24 60 60 1000{⍺⊤(×/⍺)×⍵}SM-T
+    ∇ TS←IDNToDate SM                ⍝ Convert IDN to date format : 3↑⎕TS ← IDN (akd TS_SM)
+      TS←3↑2 ⎕NQ'.' 'IDNToDate'(⌊SM)
+      TS,←⌊0.5+24 60 60 1000⊤86400000×1|SM
+    ∇
+
+    ∇ new←ts IdnAdd t
+    ⍝ T is D HH MM SS
+      new←ts+(0 24 60 60 1000⊥¯5↑t,0)÷86400000
     ∇
 
     ∇ r←Now

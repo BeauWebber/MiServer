@@ -43,4 +43,14 @@
     <ext>png</ext>
     <type>image/png</type>
   </content>  
-</ContentTypes>
+  <content>
+    <ext>jpg</ext>
+    <type>image/jpeg</type>
+  </content>  
+  <content>
+    <ext>bmp</ext>
+    <type>image/bmp</type>
+  </content>  <content>
+    <ext>jpeg</ext>
+    <type>image/jpeg</type>
+  </content></ContentTypes>

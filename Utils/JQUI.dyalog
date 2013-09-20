@@ -43,9 +43,9 @@
       id hdrs content jqpars←4↑pars,(⍴pars)↓'' '' '' ''
       :If 0∊⍴id ⋄ id←'myAccordian' ⋄ :EndIf
       :If 9=⎕NC'req' ⋄ req.Use'JQueryUI' ⋄ :EndIf
-      hdrs←#.HTML.h3¨('href' '#')∘#.HTML.a¨hdrs
-      content←#.HTML.div¨content
-      r←'id'id #.HTML.div,hdrs,[1.1]content
+      hdrs←#.OldHTML.h3¨('href' '#')∘#.OldHTML.a¨hdrs
+      content←#.OldHTML.div¨content
+      r←'id'id #.OldHTML.div,hdrs,[1.1]content
       r,←#.JQ.JQueryfn('accordion'id jqpars)
     ∇
 
@@ -53,7 +53,7 @@
       :If 9=⎕NC'req' ⋄ req.Use'JQueryUI' ⋄ :EndIf
       pars←eis pars
       id caption buttonpars jqpars←4↑pars,(⍴pars)↓'' '' '' ''
-      r←(('id'id),{0∊⍴⍵:⍵ ⋄ eis ⍵}buttonpars)#.HTML.button caption
+      r←(('id'id),{0∊⍴⍵:⍵ ⋄ eis ⍵}buttonpars)#.OldHTML.button caption
       r,←#.JQ.JQueryfn'button'id jqpars
     ∇
 
@@ -83,7 +83,7 @@
       id title innerhtml jqpars chain←5↑pars,(⍴pars)↓'' '' '' '' ''
       :If 9=⎕NC'req' ⋄ req.Use'JQueryUI' ⋄ :EndIf
       r←''
-      r←((title∘ine¨'title'title),(id∘ine¨'id'id))#.HTML.div innerhtml
+      r←((title∘ine¨'title'title),(id∘ine¨'id'id))#.OldHTML.div innerhtml
       r,←#.JQ.JQueryfn'dialog'id jqpars chain
     ∇
 
@@ -207,7 +207,7 @@
       :If ~∧/uris
           r,←enlist('div id="'∘,¨(,∘'"')¨(~uris)/tabids)#.HTMLInput.Enclose¨(~uris)/content
       :EndIf
-      r←'id'id #.HTML.div r
+      r←'id'id #.OldHTML.div r
       r,←#.JQ.JQueryfn'tabs'id jqpars
     ∇
 

@@ -1,5 +1,6 @@
 ﻿:Class HTTPRequest
 
+    (⎕IO ⎕ML)←1 1
     CR LF←NL←⎕UCS 13 10
 
 ⍝ Common Status Codes
@@ -13,6 +14,7 @@
     :Field Public Instance Headers
     :Field Public Instance Command
     :Field Public Instance Page
+    :Field Public Instance Filename
     :Field Public Instance Arguments
     :Field Public Instance PeerAddr
     :Field Public Instance PeerCert
@@ -27,7 +29,8 @@
 
     :Field Public Instance Response
 
-    GetFromTable←{(⍵[;1]⍳⊂#.Strings.lc ⍺)⊃⍵[;2],⊂''}
+    GetFromTable←{(⍵[;1]⍳⊂#.Strings.lc ,⍺)⊃⍵[;2],⊂''}
+    GetFromTableCS←{(⍵[;1]⍳⊂,⍺)⊃⍵[;2],⊂''} ⍝ Case Sensitive
     ine←{0∊⍴⍺:'' ⋄ ⍵} ⍝ if not empty
     inf←{∨/⍵⍷⍺:'' ⋄ ⍵} ⍝ if not found
     enlist←{⎕ML←1 ⋄ ∊⍵}
@@ -73,7 +76,7 @@
           z←'--',(8+('boundary='⍷z)⍳1)↓z ⍝ boundary string
           Data←↑DecodeMultiPart¨¯1↓z{(⍴⍺)↓¨(⍺⍷⍵)⊂⍵}data ⍝ ¯1↓ because last boundary has '--' appended
       :ElseIf 'application/x-www-form-urlencoded'begins z
-          Data←URLDecodeArgs data
+          Data←1 URLDecodeArgs data
       :ElseIf 'text/plain'begins z
           Data←1 2⍴'Data'data ⍝ if text, create artificial "Data" entry
       :Else
@@ -88,10 +91,11 @@
           :EndIf
       :EndIf
      
+     
       :If ∨/mask←(Data⍪Arguments)[;1]{⍵≡(-⍴⍵)↑⍺}¨⊂'serialized' ⍝ do we have any serialized form data from AJAX?
           new←0 2⍴⊂''
           :For s :In mask/(Data⍪Arguments)[;2]
-              new⍪←URLDecodeArgs s
+              new⍪←1 URLDecodeArgs s
           :EndFor
           Data←((~(⊃⍴Data)↑mask)⌿Data)⍪new
       :EndIf
@@ -128,7 +132,7 @@
 
     ∇ r←GetData name
       :Access Public Instance
-      r←name GetFromTable Data
+      r←name GetFromTableCS Data
     ∇
 
     ∇ r←GetHeader name
@@ -136,10 +140,12 @@
       r←(#.Strings.lc name)GetFromTable Headers
     ∇
 
-    ∇ r←URLDecodeArgs args
+    ∇ r←{cs}URLDecodeArgs args
       :Access Public Shared
+      cs←{6::0 ⋄ cs}''
       r←(args∨.≠' ')⌿↑'='∘split¨{1↓¨(⍵='&')⊂⍵}'&',args ⍝ Cut on '&'
       r[;2]←ArgXLT¨r[;2]
+      :If ~cs ⋄ r[;1]←#.Strings.lc¨r[;1] ⋄ :EndIf
     ∇
 
     ∇ r←URLEncode data;⎕IO;z;ok;nul;m;enlist
@@ -274,7 +280,7 @@
 ⍝            desktop platforms (or bots) and assume that anything else is a mobile platform
      
       :Access public instance
-      cis←{~0∊⍴(⍺ ⎕S 0 ⎕OPT 'IC' 1)⍵} ⍝ Case Insensitive Search
+      cis←{~0∊⍴(⍺ ⎕S 0 ⎕OPT'IC' 1)⍵} ⍝ Case Insensitive Search
      
       r←0
      
@@ -300,6 +306,11 @@
     ∇ r←IsAPLJax
       :Access public instance
       r←'XMLHttpRequest'≡GetHeader'x-requested-with'
+    ∇
+
+    ∇ r←IsPost
+      :Access public instance
+      r←Command≡'post'
     ∇
 
     ∇ r←JSPlugIn file;root ⍝ Retrieve a JavaScript PlugIn

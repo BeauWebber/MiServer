@@ -1,0 +1,15 @@
+<Virtual>
+<!-- valid replacements are 
+     %ServerRoot% - MiServer root directory
+     %SiteRoot%   - web site root -->
+  <directory>
+    <alias>JQuery</alias>
+    <path>%ServerRoot%\PlugIns\JQuery\</path>
+  </directory>
+
+  <directory>
+    <alias>SyncFusion</alias>
+    <path>%ServerRoot%\PlugIns\SyncFusion\</path>
+  </directory>
+
+</Virtual>

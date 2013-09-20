@@ -1,0 +1,3 @@
+﻿:Class Blank : MiPage
+
+:EndClass

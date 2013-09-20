@@ -74,9 +74,10 @@
     _pifn←{({⍵''}⍣(1=|≡⍵))⍵}
 
     ∇ r←ScriptFollows
-     ⍝ treat following commented lines in caller as a script
-      r←{⎕ML←1 ⋄ ∊1↓¨⍵/⍨∧\'⍝'=⊃¨⍵}dtlb¨(1+2⊃⎕LC)↓⎕NR 2⊃⎕SI
+     ⍝ treat following commented lines in caller as a script, lines beginning with ⍝⍝ are stripped out
+      r←{⎕ML←1 ⋄ ∊{'⍝'=⊃⍵:'' ⋄ ' ',dtlb ⍵}¨1↓¨⍵/⍨∧\'⍝'=⊃¨⍵}dtlb¨(1+2⊃⎕LC)↓⎕NR 2⊃⎕SI
     ∇
+
 
     ∇ html←TextToHTML html;mask;CR
     ⍝ Add/insert <br/>, replaces CR with <br/>,CR
@@ -152,7 +153,7 @@
       :If 1=⍴⍴1⊃pars ⋄ values display←pars[1]
       :Else ⋄ values display←↓[1]1⊃pars
       :EndIf
-      mask←values∊eis 2⊃pars
+      mask←values∊⍕¨eis 2⊃pars
       :If 4⊃pars ⋄ gv←⍒mask ⋄ values←values[gv] ⋄ display←display[gv] ⋄ mask←mask[gv] ⋄ :EndIf ⍝ Sort selected items first
       r←'<select ',(3⊃pars),(name ine' id=',n,' name=',n←quote name),'>',CRLF
       r,←enlist(mask{'<option value="',(⍕⍵),'"',(⍺/' selected="selected"'),'>'}¨values),¨display,¨⊂'</option>',CRLF
@@ -179,7 +180,7 @@
       :EndIf
       pars←,eis pars
       val size att←3↑pars,(⍴pars)↓''⍬''
-      r←Tag'input ',att,' type="text" size="',(⍕size),'" value="',(⍕val),'"',name
+      r←Tag'input ',att,((~0∊⍴size)/' size="',(⍕size),'"'),' type="text" value="',(⍕val),'"',name
     ∇
 
     ∇ r←{name}Submit pars
@@ -228,7 +229,7 @@
       :Else ⋄ name←enlist(,∘('="',name,'"'))¨' id' ' name'
       :EndIf
       val size att←3↑pars,(⍴pars)↓''⍬''
-      r←Tag'input ',att,' type="password" size="',(⍕size),'" value="',val,'"',name
+      r←Tag'input ',att,((~0∊⍴size)/' size="',(⍕size),'"'),' type="password" value="',val,'"',name
     ∇
 
     ∇ r←{name}CheckBox pars
@@ -273,9 +274,9 @@
       r←enlist name∘{BRA(0 Tag'input type="radio"',⍺,' value="',(1⊃⍵),'"',(1=3⊃⍵)/' checked="checked"'),(2⊃⍵)}¨↓choices,sel
     ∇
 
-    ∇ r←{name}Table pars;x;data;atts;tdc;tda;thc;tha;hdrrows;z;mask;cellids;n;rowids;rows
+    ∇ r←{id}Table pars;x;data;atts;tdc;tda;thc;tha;hdrrows;z;mask;cellids;n;rowids;rows
     ⍝ pars: data table_atts cell_attribs header_attribs #header_rows cell-ids? row-ids?
-      :If 0=⎕NC'name' ⋄ name←'' ⋄ :EndIf
+      :If 0=⎕NC'id' ⋄ id←'' ⋄ :EndIf
       :If 2=⍴⍴pars ⋄ pars←,⊂pars ⋄ :EndIf ⍝ Matrix of data only
       pars←pars,(⍴,pars)↓(1 1⍴⊂'data')'' '' '' 0 0 0
       data atts tda tha hdrrows cellids rowids←pars
@@ -289,6 +290,8 @@
       :EndIf
       :If (⍴tda)≡⍴data
           r←('<td'∘,¨tda ine¨' ',¨tda),¨r
+      :ElseIf (⍴tda)=¯1↑⍴data
+          r←↑(⊂'<td'∘,¨tda ine¨' ',¨tda),¨¨↓r
       :Else
           r←('<td',tda ine' ',tda)∘,¨r
       :EndIf
@@ -302,7 +305,7 @@
           r←mask\r
           r[n]←'<thead>' '</thead>' '<tbody>' '</tbody>',¨⊂CRLF
       :EndIf
-      r←('table',(name ine' id="',name,'"'),(atts ine' ',atts))Enclose CRLF,(enlist r),CRLF
+      r←('table',(id ine' id="',id,'"'),(atts ine' ',atts))Enclose CRLF,(enlist r),CRLF
     ∇
 
     ∇ r←{name}List pars;items;ordered;t

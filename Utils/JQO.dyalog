@@ -159,23 +159,22 @@
 
 ⍝ DataTables
 
-    ∇ r←{req}DataTable pars;id;tablepars;jqpars;oname;tab
+    ∇ r←{req}DataTable pars;id;tablepars;jqpars;oname;tab;js
     ⍝ req - HTTPRequest object
-    ⍝ pars - id tablepars jqpars pager
+    ⍝ pars - id tablepars jqpars object-name
     ⍝ id - the id for the table to be sorted
     ⍝ jqpars - TableSorter parameters
     ⍝ tablepars - parameters for the table (see #.HTMLInput.Table)
+    ⍝ oname - the object name for the datatable
+    ⍝ js - any additional javascript
     ⍝ updates req.Response.head and returns html
      
-    ⍝ Usage Notes:
-    ⍝ the table is assigned a class of "tablesorter" by this function
-    ⍝ the first row is considered a header row
       :If 9=⎕NC'req'
           req.Use'DataTable'
       :EndIf
      
       pars←eis pars
-      id tablepars jqpars oname←4↑pars,(⍴pars)↓'' '' '' ''
+      id tablepars jqpars oname js←5↑pars,(⍴pars)↓'' '' '' '' ''
       tab←'cellpadding="0" width="100%" cellspacing="0" border="0"'
       :If 0∊⍴id ⋄ id←'myDataTable' ⋄ :EndIf
       :If 0∊⍴tablepars ⋄ r←(tab,' id="',id,'"')#.HTMLInput.Enclose''
@@ -184,11 +183,13 @@
           tablepars←tablepars,(⍴,tablepars)↓(0 0⍴⊂'')tab'' '' 1 0 1 ⍝ see HTMLInput.Table for
           r←id #.HTMLInput.Table tablepars
       :EndIf
-      r,←#.JQ.JQueryfn'dataTable'id jqpars''oname
+      r,←#.JQ.JQueryfn'dataTable'id jqpars js oname
     ∇
 
-    ∇ r←{DT_RowId}make_aaData data;nrecs;hdr
-    ⍝ data[1;] is column name
+    ∇ r←{DT_RowId}make_aaData data;nrecs;hdr;rows
+      :If 0∊⍴data
+          rows←'[]'
+      :Else
       DT_RowId←{6::0 ⋄ DT_RowId}0
       nrecs←⍬⍴⍴data
       hdr←⍕¨¯1+⍳2⊃⍴data
@@ -196,156 +197,12 @@
           hdr,⍨←⊂'DT_RowId'
           data,⍨←⍳nrecs
       :EndIf
-      r←1↓¯1↓#.JSON.fromNVP('aaData'(#.JSON.fromNVP(⊂⊂∘,¨hdr),¨¨↓⊂∘⍕¨data))
+          rows←#.JSON.fromNVP(⊂⊂∘,¨hdr),¨¨↓⊂∘⍕¨data
+      :EndIf
+      r←1↓¯1↓#.JSON.fromNVP('aaData')rows
     ∇
 
 
-    :class dataTable
-
-        :field private data      ⍝ data for the table (not required as the data make come from the server)
-
-        :field private id        ⍝ id for the table - required
-
-        :field private opts      ⍝ allows you to pass options without using fields defined below
-                                ⍝ using this you may be able to use new datatables features before we code support for them
-
-        ⍝ fields to mimic DataTables parameters.  See: http://datatables.net/ref
-        :field private aaData
-        :field private aaSorting
-        :field private aaSortingFixed
-        :field private aDataSort
-        :field private aLengthMenu
-        :field private aoSearchCols
-        :field private asSorting
-        :field private asStripeClasses
-        :field private bAutoWidth
-        :field private bDeferRender
-        :field private bDestroy
-        :field private bFilter
-        :field private bInfo
-        :field private bJQueryUI
-        :field private bLengthChange
-        :field private bPaginate
-        :field private bProcessing
-        :field private bRetrieve
-        :field private bScrollAutoCss
-        :field private bScrollCollapse
-        :field private bScrollInfinite
-        :field private bSearchable
-        :field private bSort
-        :field private bSortable
-        :field private bSortCellsTop
-        :field private bSortClasses
-        :field private bStateSave
-        :field private bUseRendered
-        :field private bVisible
-        :field private fnAddData
-        :field private fnAdjustColumnSizing
-        :field private fnClearTable
-        :field private fnClose
-        :field private fnCookieCallback
-        :field private fnCreatedCell
-        :field private fnCreatedRow
-        :field private fnDeleteRow
-        :field private fnDestroy
-        :field private fnDraw
-        :field private fnDrawCallback
-        :field private fnFilter
-        :field private fnFooterCallback
-        :field private fnFormatNumber
-        :field private fnGetData
-        :field private fnGetNodes
-        :field private fnGetPosition
-        :field private fnHeaderCallback
-        :field private fnInfoCallback
-        :field private fnInitComplete
-        :field private fnIsDataTable
-        :field private fnIsOpen
-        :field private fnPageChange
-        :field private fnPreDrawCallback
-        :field private fnRender
-        :field private fnRowCallback
-        :field private fnServerData
-        :field private fnServerParams
-        :field private fnSetColumnVis
-        :field private fnSettings
-        :field private fnSort
-        :field private fnSortListener
-        :field private fnStateLoad
-        :field private fnStateLoaded
-        :field private fnStateLoadParams
-        :field private fnStateSave
-        :field private fnStateSaveParams
-        :field private fnTables
-        :field private fnUpdate
-        :field private fnVersionCheck
-        :field private iCookieDuration
-        :field private iDataSort
-        :field private iDeferLoading
-        :field private iDisplayLength
-        :field private iDisplayStart
-        :field private iScrollLoadGap
-        :field private iTabIndex
-        :field private mData
-        :field private mRender
-        :field private oLanguage_oAria_sSortAscending
-        :field private oLanguage_oAria_sSortDescending
-        :field private oLanguage_oPaginate_sFirst
-        :field private oLanguage_oPaginate_sLast
-        :field private oLanguage_oPaginate_sNext
-        :field private oLanguage_oPaginate_sPrevious
-        :field private oLanguage_sInfo
-        :field private oLanguage_sInfoEmpty
-        :field private oLanguage_sInfoFiltered
-        :field private oLanguage_sInfoPostFix
-        :field private oLanguage_sInfoThousands
-        :field private oLanguage_sLengthMenu
-        :field private oLanguage_sLoadingRecords
-        :field private oLanguage_sProcessing
-        :field private oLanguage_sSearch
-        :field private oLanguage_sUrl
-        :field private oLanguage_sZeroRecords
-        :field private oSearch
-        :field private sAjaxDataProp
-        :field private sAjaxSource
-        :field private sCellType
-        :field private sClass
-        :field private sContentPadding
-        :field private sCookiePrefix
-        :field private sDefaultContent
-        :field private sDom
-        :field private sName
-        :field private sPaginationType
-        :field private sScrollX
-        :field private sScrollXInner
-        :field private sScrollY
-        :field private sServerMethod
-        :field private sSortDataType
-        :field private sTitle
-        :field private sType
-        :field private sWidth
-
-
-        ∇ make
-          :Implements constructor
-          :Access public
-        ∇
-
-        ∇ make1(id)
-          :Implements constructor
-          :Access public
-        ∇
-
-        ∇ html←Render
-          :Access private
-        ∇
-
-        ∇ r←foo
-          :Access public
-          r←⎕NL ¯2.2
-        ∇
-
-    :endclass
 
     ∇ r←{req}JSTimer pars;id;event;delay;autostart
     ⍝ return script to implement a timed loop
@@ -360,6 +217,43 @@
       :If autostart ⋄ r,←'$(function(){run⍳();});',CRLF ⋄ :EndIf
       ((r='⍳')/r)←⊂id
       r←#.HTMLInput.JS enlist r
+    ∇
+
+    ∇ r←{req}sfChart pars;id;titles;data;jqpars;cpars;ctitle;xtitle;ytitle;n;i;points;name;chain;oname
+    ⍝ pars - [1] id
+    ⍝        [2] (chart-title, x-axis-title, y-axis-title)
+    ⍝        [3] data (one row per series) [;1] series-name [;2] 2-column matrix of x,y points
+    ⍝        [4] jqpars
+      :If 9=⎕NC'req' ⋄ req.Use'SyncFusion' ⋄ :EndIf
+      pars←eis pars
+      (id titles data jqpars chain oname)←6↑pars,(⍴pars)↓''('' '' '')(0 0⍴⊂'')'' '' ''
+      (ctitle xtitle ytitle)←{3↑⍵,(⍴⍵)↓'Chart Title' 'X-Axis Title' 'Y-Axis Title'}eis titles
+     
+      cpars←⎕NS''
+      cpars.text←ctitle
+      cpars.legend←⎕NS''
+      cpars.legend.visible←#.JSON.true
+      cpars.primaryXAxis←⎕NS''
+      cpars.primaryXAxis.rangePadding←'10px'
+      cpars.primaryXAxis.title←⎕NS''
+      cpars.primaryXAxis.title.text←xtitle
+      cpars.primaryYAxis←⎕NS''
+      cpars.primaryYAxis.title←⎕NS''
+      cpars.primaryYAxis.title.text←ytitle
+      cpars.commonSeriesOptions←⎕NS''
+      cpars.commonSeriesOptions.(type marker style)←'line'(⎕NS'')(⎕NS'')
+      cpars.commonSeriesOptions.marker.(shape visible size)←'circle'#.JSON.true(⎕NS'')
+      cpars.commonSeriesOptions.marker.size.(height width)←10
+      cpars.commonSeriesOptions.style.borderwidth←2
+      cpars.series←⎕NS¨(n←⊃⍴data)⍴⊂''
+      :For i :In ⍳n
+          (name points)←data[i;]
+          cpars.series[i].name←name
+          cpars.series[i].points←⎕NS¨(⊃⍴points)⍴⊂''
+          cpars.series[i].points.(x y)←↓points
+      :EndFor
+      cpars←(1↓¯1↓#.JSON.fromNS cpars),',',jqpars
+      r←#.JQ.JQueryfn'ejChart'id cpars
     ∇
 
 :EndNamespace

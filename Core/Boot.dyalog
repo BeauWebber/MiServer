@@ -1,6 +1,6 @@
 ﻿:Namespace Boot
 
-    ⎕IO←1
+    ⎕ML ⎕IO←1 1
 
     IsWin←('.' ⎕WG 'APLVersion')[3]≡⊂,'W'
     FSep←'/\'[1+IsWin]
@@ -32,17 +32,18 @@
      
       :If 0≠⍴classes←↓#.⎕NL 9.4
       :AndIf 0≠⍴classes←(m←2=⊃∘⍴¨z←⎕CLASS¨#⍎¨classes)/classes
-          classes←(#.MildPage≡¨2 1∘⊃¨m/z)/classes
+      :AndIf 0≠⎕NC'#.MiPage'
+          classes←(#.MiPage≡¨2 1∘⊃¨m/z)/classes
           #.⎕EX↑⍕¨classes ⍝ Erase loaded classes
       :EndIf
      
       Load 0
-      ⎕EX'#.MildPage'
+      ⎕EX'#.MiPage'
       ⎕EX'AppRoot'
     ∇
 
     ∇ ms←Init Config;path;class;classes;e;res;mask
-     ⍝ Create instances of MildServer, Session and Authentication Handlers
+     ⍝ Create instances of MiServer, Session and Authentication Handlers
      
       ms←⎕NEW(#⍎Config.ClassName)Config
       path←MSRoot,'Extensions/'
@@ -76,79 +77,52 @@
       :EndIf
     ∇
 
-    ∇ Load yes;files;f;classes;class;utils
-      ⍝ Note: DRC, XML, SOAP namespaces are not SALTed
-     
+    ∇ Load yes;files;f;classes;class;utils;t;disperror
+      ⍝ Load required objects for MiServer
+      ⍝ Note: DRC namespace is not SALTed
+      ⍝ yes - 1 to perform load, 0 to clean up
+      disperror←{}∘{326=⎕DR ⍵:'' ⋄ '***'≡3↑⍵:⎕←⍵ ⋄ ''}
       classes←(⎕SE.SALT.List AppRoot,'Code -raw')[;1 2] ⍝ Classes in application folder
       classes←(empty¨classes[;1])/classes[;2] ⍝ remove directory entries (have <DIR> in [;1])
       utils←(⎕SE.SALT.List MSRoot,'Utils -raw')[;2]   ⍝ find utility libraries
-     
+      core←(⎕SE.SALT.List MSRoot,'Core -raw')[;2]
+      core~←⊂'Boot'
       :If yes
      
-          files←'Core/'∘,¨'MildServer' 'HTTPRequest' 'MildPage'
+          files←'Core/'∘,¨core
           files,←'Utils/'∘,¨utils
      
           :For f :In files
-              ⎕SE.SALT.Load MSRoot,f,' -target=#'
+              disperror ⎕SE.SALT.Load MSRoot,f,' -target=#'
           :EndFor
      
           :If 0≠⍴classes
               :For class :In classes
-                  ⎕SE.SALT.Load AppRoot,'Code/',class,' -target=#'
+                  disperror ⎕SE.SALT.Load AppRoot,'Code/',class,' -target=#'
               :EndFor
           :EndIf
      
           'Pages'#.⎕NS'' ⍝ Container Space for loaded classes
-          ⎕SE.SALT.Load MSRoot,'Core/MildPage -target=#.Pages'
+          disperror ⎕SE.SALT.Load MSRoot,'Core/MiPage -target=#.Pages'
           :If #.Files.DirExists AppRoot,'/Code/Templates/'
-              ⎕SE.SALT.Load AppRoot,'Code/Templates/* -target=#.Pages'
+              disperror ⎕SE.SALT.Load AppRoot,'Code/Templates/* -target=#.Pages'
           :EndIf
      
       :Else ⍝ Cleanup
           #.⎕EX¨classes
           #.⎕EX¨utils
           #.⎕EX'Pages'
-          #.⎕EX¨'MildServer' 'HTTPRequest'
+          #.⎕EX¨'MiServer' 'HTTPRequest'
       :EndIf
     ∇
 
-    ∇ Run root;Config
+    ∇ Run root
+    ⍝ root is the path to the #.Start
      
-      AppRoot←root,(~(¯1↑root)∊'\/')/'/'
-      Load 1
-      :If #.Files.Exists AppRoot,'Config/Server.xml'
-          Config←(#.XML.ToNS #.Files.GetText AppRoot,'Config/Server.xml').Server
-      :Else
-          Config←⎕NS''
-          Config.(ClassName DefaultPage)←'MildServer' 'index'
-      :EndIf
-      Config.Port←Config Setting'Port' 1 8080
-      Config.TrapErrors←Config Setting'TrapErrors' 1 0
-      Config.Logger←Config Setting'Logger' 0 ''
-      Config.SessionHandler←Config Setting'SessionHandler' 0 'SimpleSessions'
-      Config.Authentication←Config Setting'Authentication' 0 ''
-      Config.Debug←Config Setting'Debug' 1 0
-      Config.Root←MSRoot{((IsRelPath ⍵)/⍺),⍵}AppRoot
-      Config.TempFolder←Config.Root{0∊⍴⍵:⍵ ⋄ ((IsRelPath ⍵)/⍺),⍵}Config Setting'TempFolder' 0
-      Config.UseContentEncoding←Config Setting'UseContentEncoding' 1 0 ⍝ aka HTTP Compression default off (0)
-      Config.SupportedEncodings←{(⊂'')~⍨1↓¨(⍵=⊃⍵)⊂⍵}',',Config Setting'SupportedEncodings' 0
-      Config.LogMessageLevel←Config Setting'LogMessageLevel' 1 ¯1 ⍝ default to all message types
-      Config.HttpCacheTime←Config Setting'HttpCacheTime' 1 0 ⍝ default to off (0)
-      Config.IdleTimeOut←Config Setting'IdleTimeOut' 1 0 ⍝ default to none (0)
+      AppRoot←root,(~(¯1↑root)∊'\/')/'/'  ⍝ application (website) root
+      Load 1 ⍝ load essential objects
      
-      :If 0≠⎕NC'#.DrA' ⍝ Transfer DrA config options
-          {}#.DrA.SetDefaults
-          #.DrA.Mode←Config Setting'Mode' 1 2 ⍝ Developer mode
-          #.DrA.NoUser←Config Setting'NoUser' 1 1 ⍝ run without user interaction
-          #.DrA.Path←AppRoot ⍝ Where to put log files
-          #.DrA.SMTP_Gateway←Config Setting'SMTP_Gateway' 0
-          #.DrA.MailRecipient←Config Setting'MailRecipient' 0
-          #.DrA.MailMethod←Config Setting'MailMethod' 0 'NONE'
-          #.DrA.AppName←Config Setting'Name' 0
-          #.DrA.UseHTTP←Config Setting'UseHTTP' 1 0
-      :EndIf
-     
-      ms←Init Config ⍝ Create instance of MildServer, Session and Authentication handlers
+      ms←Init ConfigureServer ⍝ read configuration and create server instance
      
       ConfigureDatasources ms
       ConfigureVirtual ms
@@ -176,6 +150,42 @@
           (mask/r)←(tonum⍣num)¨(mask/ns).⍎⊂name
       :EndIf
       :If 0=⍴⍴r ⋄ r←⊃r ⋄ :EndIf
+    ∇
+
+    ∇ Config←ConfigureServer
+      ⍝ read MiServer configuration file, if it exists
+      :If #.Files.Exists AppRoot,'Config/Server.xml'
+          Config←(#.XML.ToNS #.Files.GetText AppRoot,'Config/Server.xml').Server
+      :Else
+          Config←⎕NS''
+          Config.(ClassName DefaultPage)←'MiServer' 'index'
+      :EndIf
+     
+      Config.Port←Config Setting'Port' 1 8080
+      Config.TrapErrors←Config Setting'TrapErrors' 1 0
+      Config.Logger←Config Setting'Logger' 0 ''
+      Config.SessionHandler←Config Setting'SessionHandler' 0 'SimpleSessions'
+      Config.Authentication←Config Setting'Authentication' 0 'SimpleAuth'
+      Config.Debug←Config Setting'Debug' 1 0
+      Config.Root←MSRoot{((IsRelPath ⍵)/⍺),⍵}AppRoot
+      Config.TempFolder←Config.Root{0∊⍴⍵:⍵ ⋄ ((IsRelPath ⍵)/⍺),⍵}Config Setting'TempFolder' 0
+      Config.UseContentEncoding←Config Setting'UseContentEncoding' 1 0 ⍝ aka HTTP Compression default off (0)
+      Config.SupportedEncodings←{(⊂'')~⍨1↓¨(⍵=⊃⍵)⊂⍵}',',Config Setting'SupportedEncodings' 0
+      Config.LogMessageLevel←Config Setting'LogMessageLevel' 1 ¯1 ⍝ default to all message types
+      Config.HttpCacheTime←Config Setting'HttpCacheTime' 1 0 ⍝ default to off (0)
+      Config.IdleTimeOut←Config Setting'IdleTimeOut' 1 0 ⍝ default to none (0)
+     
+      :If 0≠⎕NC'#.DrA' ⍝ Transfer DrA config options
+          {}#.DrA.SetDefaults
+          #.DrA.Mode←Config Setting'Mode' 1 2 ⍝ Developer mode
+          #.DrA.NoUser←Config Setting'NoUser' 1 1 ⍝ run without user interaction
+          #.DrA.Path←AppRoot ⍝ Where to put log files
+          #.DrA.SMTP_Gateway←Config Setting'SMTP_Gateway' 0
+          #.DrA.MailRecipient←Config Setting'MailRecipient' 0
+          #.DrA.MailMethod←Config Setting'MailMethod' 0 'NONE'
+          #.DrA.AppName←Config Setting'Name' 0
+          #.DrA.UseHTTP←Config Setting'UseHTTP' 1 0
+      :EndIf
     ∇
 
     ∇ ConfigureDatasources ms;file;ds;name;tmp;orig
